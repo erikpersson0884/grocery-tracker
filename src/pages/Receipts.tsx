@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, exportAll, importAll } from '../db'
+import { categorize } from '../categorize'
 import { sek } from '../types'
 
 export default function Receipts() {
@@ -17,6 +18,17 @@ export default function Receipts() {
     })
     setOpen(null)
   }
+  async function recategorize() {
+    const rules = new Map((await db.rules.toArray()).map(r => [r.key, r.category]))
+    const others = await db.items.where('category').equals('Other').toArray()
+    console.log([...new Set(others.map(i => i.rawName))].sort().join('\n'))
+    let n = 0
+    for (const i of others) {
+      const c = categorize(i.rawName, rules)
+      if (c !== 'Other') { await db.items.update(i.id!, { category: c }); n++ }
+    }
+    alert(`Updated ${n} of ${others.length} items that were in "Other".`)
+  }
   async function doExport() {
     const url = URL.createObjectURL(new Blob([await exportAll()], { type: 'application/json' }))
     Object.assign(document.createElement('a'), { href: url, download: 'grocery-backup.json' }).click()
@@ -30,6 +42,7 @@ export default function Receipts() {
     <section>
       <div className="row">
         <h2>Receipts</h2>
+        <button onClick={recategorize}>Re-categorize “Other”</button>
         <button onClick={doExport}>Export backup</button>
         <button onClick={() => fileRef.current?.click()}>Import backup</button>
         <input ref={fileRef} type="file" accept="application/json" hidden
