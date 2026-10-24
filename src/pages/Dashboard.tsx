@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { db } from '../db'
+import Welcome from '../components/Welcome'
 import { sek } from '../types'
 
 const COLORS = ['#0f766e', '#d97706', '#4f46e5', '#be123c', '#65a30d', '#0891b2', '#9333ea', '#ca8a04', '#475569', '#94a3b8']
@@ -27,7 +28,7 @@ export default function Dashboard() {
   const total = items.reduce((s, i) => s + i.netTotal, 0)
 
   if (!all) return null
-  if (!all.length) return <p className="empty">No receipts yet. Add one to see where your money goes.</p>
+  if (!all.length) return <Welcome />
 
   return (
     <section>

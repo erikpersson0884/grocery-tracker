@@ -47,3 +47,14 @@ td small { display: block; color: var(--muted); }
 summary.head { display: flex; gap: 1rem; padding: .5rem 0; cursor: pointer; }
 summary.head span:nth-child(2) { flex: 1; }
 .banner ul { margin: .25rem 0 0; padding-left: 1.2rem; }
+.welcome { text-align: center; max-width: 640px; margin: 1.5rem auto; }
+.welcome h2 { font-size: 1.6rem; margin: .75rem 0 .5rem; }
+.welcome .lead { color: var(--muted); font-size: 1.05rem; margin: 0 auto 1.5rem; }
+.steps { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: .75rem; text-align: left; }
+.steps li { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: .75rem 1rem .75rem 3.25rem; }
+.steps p { margin: .15rem 0 0; color: var(--muted); }
+.badge { position: absolute; left: 1rem; top: .8rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--accent); color: var(--bg); display: grid; place-items: center; font-weight: 700; font-size: .85rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; margin-bottom: 1.5rem; }
+.btn { display: inline-block; text-decoration: none; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: .5rem 1.1rem; }
+.btn.primary { margin-top: 0; }
+.note { color: var(--muted); font-size: .85rem; }
