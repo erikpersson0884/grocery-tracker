@@ -8,6 +8,14 @@ import { sek } from '../types'
 const COLORS = ['#0f766e', '#d97706', '#4f46e5', '#be123c', '#65a30d', '#0891b2', '#9333ea', '#ca8a04', '#475569', '#94a3b8']
 const ore = (v: unknown) => sek(Number(v))
 
+// Tooltip styling that follows the app's light/dark colors.
+const tip = {
+  contentStyle: { background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--fg)' },
+  labelStyle: { color: 'var(--fg)', fontWeight: 600 },
+  itemStyle: { color: 'var(--fg)' },
+  cursor: { fill: 'var(--line)', opacity: 0.5 },
+}
+
 export default function Dashboard() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -45,7 +53,7 @@ export default function Dashboard() {
             <Pie data={byCategory} dataKey="value" nameKey="name" innerRadius={60} outerRadius={110}>
               {byCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             </Pie>
-            <Tooltip formatter={ore} />
+            <Tooltip formatter={ore} {...tip} />
           </PieChart>
         </ResponsiveContainer>
         <ul className="legend">
@@ -61,8 +69,8 @@ export default function Dashboard() {
         <BarChart data={topItems} layout="vertical" margin={{ left: 90 }}>
           <XAxis type="number" tickFormatter={v => `${Math.round(v / 100)} kr`} />
           <YAxis type="category" dataKey="name" width={90} />
-          <Tooltip formatter={ore} />
-          <Bar dataKey="value" fill="#0f766e" />
+          <Tooltip formatter={ore} {...tip} />
+          <Bar dataKey="value" name="Spent" fill="#0f766e" />
         </BarChart>
       </ResponsiveContainer>
 
@@ -71,8 +79,8 @@ export default function Dashboard() {
         <BarChart data={byMonth}>
           <XAxis dataKey="name" />
           <YAxis tickFormatter={v => `${Math.round(v / 100)}`} />
-          <Tooltip formatter={ore} />
-          <Bar dataKey="value" fill="#4f46e5" />
+          <Tooltip formatter={ore} {...tip} />
+          <Bar dataKey="value" name="Spent" fill="#4f46e5" />
         </BarChart>
       </ResponsiveContainer>
     </section>

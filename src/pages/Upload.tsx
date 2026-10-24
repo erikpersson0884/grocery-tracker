@@ -26,6 +26,7 @@ export default function Upload() {
   const [saved, setSaved] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [dragging, setDragging] = useState(false)
 
   // Warn before the tab is closed or reloaded with receipts that haven't been saved.
   useEffect(() => {
@@ -104,10 +105,27 @@ export default function Upload() {
   return (
     <section>
       <h2>Add receipts</h2>
-      <label className="drop">
-        <input type="file" accept="application/pdf" multiple
+      <label
+        className={`drop${dragging ? ' dragging' : ''}`}
+        onDragOver={e => { e.preventDefault(); setDragging(true) }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={e => {
+          e.preventDefault(); setDragging(false)
+          const f = Array.from(e.dataTransfer.files)
+          if (f.length) onFiles(f)
+        }}
+      >
+        <input className="sr-only" type="file" accept="application/pdf" multiple
           onChange={e => { const f = Array.from(e.target.files ?? []); e.target.value = ''; if (f.length) onFiles(f) }} />
-        {progress || (drafts.length ? 'Add more receipt PDFs' : 'Choose one or more Willys receipt PDFs')}
+        <span className="drop-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 16V4" /><path d="M7 9l5-5 5 5" /><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3" />
+          </svg>
+        </span>
+        <span className="drop-title">
+          {progress || (dragging ? 'Release to add' : drafts.length ? 'Add more receipts' : 'Drop your receipt PDFs here')}
+        </span>
+        <span className="drop-sub">or <u>click to browse</u></span>
       </label>
 
       {saved > 0 && drafts.length === 0 && (
