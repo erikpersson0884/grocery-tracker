@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { db } from '../db'
 import { categorize, normalizeName } from '../categorize'
 import { pdfToLines, sha256 } from '../parsing/pdfText'
@@ -20,12 +20,23 @@ const tidy = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
 const sumOf = (d: Draft) => d.items.reduce((s, i) => s + i.netTotal, 0)
 
 export default function Upload() {
-  const nav = useNavigate()
   const [drafts, setDrafts] = useState<Draft[]>([])
   const [skipped, setSkipped] = useState<Skipped[]>([])
   const [progress, setProgress] = useState<string>('')
+  const [saved, setSaved] = useState(0)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+
+  // Warn before the tab is closed or reloaded with receipts that haven't been saved.
+  useEffect(() => {
+    if (!drafts.length) return
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [drafts.length])
 
   async function onFiles(files: File[]) {
+    setSaved(0)
     const rules = new Map((await db.rules.toArray()).map(r => [r.key, r.category]))
     const seen = new Set(drafts.map(d => d.fileHash))
     const newDrafts: Draft[] = []
@@ -63,6 +74,8 @@ export default function Upload() {
       i === di ? { ...d, items: d.items.map((it, j) => (j === ii ? { ...it, ...p } : it)) } : d))
 
   async function saveAll() {
+    setSaving(true); setSaveError('')
+    try {
     await db.transaction('rw', db.receipts, db.items, db.rules, async () => {
       const changed: DraftItem[] = []
       for (const d of drafts) {
@@ -79,7 +92,11 @@ export default function Upload() {
       if (changed.length)
         await db.rules.bulkPut(changed.map(i => ({ key: normalizeName(i.rawName), category: i.category })))
     })
-    nav('/')
+    setSaved(drafts.length); setDrafts([]); setSkipped([])
+    window.scrollTo({ top: 0 })
+    } catch (e) {
+      setSaveError(`Could not save: ${e instanceof Error ? e.message : String(e)}`)
+    } finally { setSaving(false) }
   }
 
   const withWarnings = drafts.filter(d => d.parsed.warnings.length || sumOf(d) !== d.parsed.total).length
@@ -90,8 +107,21 @@ export default function Upload() {
       <label className="drop">
         <input type="file" accept="application/pdf" multiple
           onChange={e => { const f = Array.from(e.target.files ?? []); e.target.value = ''; if (f.length) onFiles(f) }} />
-        {progress || 'Choose one or more Willys receipt PDFs'}
+        {progress || (drafts.length ? 'Add more receipt PDFs' : 'Choose one or more Willys receipt PDFs')}
       </label>
+
+      {saved > 0 && drafts.length === 0 && (
+        <p className="banner success">
+          <strong>✓ Saved {saved} receipt{saved > 1 ? 's' : ''}.</strong>{' '}
+          <Link to="/">View dashboard</Link> or add more above.
+        </p>
+      )}
+
+      {drafts.length > 0 && (
+        <p className="banner warn">
+          <strong>Not saved yet.</strong> Check the receipts below, then press Save at the bottom of the screen.
+        </p>
+      )}
 
       {skipped.length > 0 && (
         <div className="banner error">
@@ -151,9 +181,13 @@ export default function Upload() {
               </details>
             )
           })}
-          <button className="primary" onClick={saveAll}>
-            Save {drafts.length} receipt{drafts.length > 1 ? 's' : ''}
-          </button>
+          {saveError && <p className="banner error">{saveError}</p>}
+          <div className="savebar">
+            <span>{drafts.length} receipt{drafts.length > 1 ? 's' : ''} ready · <strong>not saved yet</strong></span>
+            <button className="primary" disabled={saving} onClick={saveAll}>
+              {saving ? 'Saving…' : `Save ${drafts.length} receipt${drafts.length > 1 ? 's' : ''}`}
+            </button>
+          </div>
         </>
       )}
     </section>
